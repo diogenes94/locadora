@@ -1,5 +1,6 @@
 #coding:utf-8
 from django.db import models
+import datetime
 
 
 # Create your models here.
@@ -11,6 +12,11 @@ FILMES_OP = [
 	('Romance','Romance'),
 	('Animacao','Animação'),
 	('Suspense','Suspense')
+]
+
+OP_ENTREGUE = [
+	('False','Não'),
+	('True','Sim')
 ]
 
 
@@ -56,8 +62,17 @@ class Alugar(models.Model):
 	Cliente = models.ForeignKey(Pessoa, verbose_name="Cliente",null=True)
 	DataAluguel = models.DateField('Data de Locação',null=True)
 	DataEntrega = models.DateField('Data de Entrega',null=True)
+	Entregue = models.CharField('Status de Entrega',max_length = 5,choices=OP_ENTREGUE, default=False)
+	
 	def __unicode__(self):
 		return str(self.Cliente)
+	def save(self, *args, **kwargs):
+		q = Alugar.objects.filter(Entregue=False,DataEntrega__lt=datetime.datetime.now(),Cliente=self.Cliente)
+		if  q :
+			raise ValueError("Cliente possui débitos")
+		super(Alugar, self).save(*args, **kwargs)
+
 class subAluguel(models.Model):
 	Aluguel = models.ForeignKey(Alugar,null=True)
 	Filme_Alugar = models.ForeignKey(Filme, verbose_name="Filme",null=True)
+
